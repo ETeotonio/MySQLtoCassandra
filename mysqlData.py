@@ -25,18 +25,25 @@ class mysqlData():
 
     def convertDataStructure(self,mysqldt,table_name):
         structure = self.connectMySQL(mysqldt,"desc "+table_name)
-        data_struct = "create table "+table_name+"("
+        data_struct = "create table "+mysqldt.database_name+"."+table_name+"("
         for item in structure: #it will only convert the most common types, like int, varchar and datetime
-            data_struct+=item[0]+" "+item[1]+",\r\n"
-        if data_struct.endswith(","):
-            data_struct=data_struct[:-1]
-        data_struct+=");\r\n"
+            if str(item[1]).startswith("int"):
+                data_struct+=item[0]+" int,\n"
+            elif str(item[1]).startswith("varchar"):
+                data_struct+=item[0]+" text,\n"
+            elif str(item[1]).startswith("enum"):
+                data_struct+=item[0]+" "+str(item[1]).replace("(","{").replace(")","}")
+            else:
+                data_struct += item[0] + " " + item[1] + ",\n"
+        if data_struct.endswith(",\n"):
+            data_struct=data_struct[:-2]
+        data_struct+=");\n"
         return data_struct
 
     def convertData(self,mysqldt,table_name):
         data = self.connectMySQL(mysqldt,"select * from "+table_name)
-        table_data = " -- Data\r\n"
+        table_data = " -- Data\n"
         for item in data:
             tamanho = len(item)
-            table_data += "insert into "+table_name+" values"+str((item[0:tamanho-1]))+";\r\n"
+            table_data += "insert into "+table_name+" values"+str((item[0:tamanho-1]))+";\n"
         return table_data
